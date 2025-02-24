@@ -5,7 +5,12 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    env_file:
+      - .env
     environment:
+      - ORCID_TOKEN=$ORCID_TOKEN
+      - ORCID_URL=$ORCID_URL
+      - HEADERS=$ORCID_HEADERS
       - PYTHONUNBUFFERED=1
     depends_on:
       - db
