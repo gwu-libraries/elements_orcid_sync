@@ -6,13 +6,16 @@ This app will provide the ability to:
 2. Transform, where possible, certain SE profile entities into equivalent ORCID entities
 3. Write ORCiD entities to the user's ORCiD profile.
 
-The app will be able to use ORCiD user tokens collected via the https://github.com/gwu-libraries/orcid-integration app;
+The app will be able to use ORCiD user tokens collected via the [orcid-integration](https://github.com/gwu-libraries/orcid-integration) app;
 the app will use these tokens (when enabled) to write to the users' ORCiD profiles.
 
 So far, the app contains an `add-membership` route which can successfully write a membership object to a user's ORCiD profile.
 Other ORCiD write endpoints should work in a similar fashion.
 
-Here is an example request curl'ed to the `add-membership` route:
+The app also contains a `db-test` route just to confirm that it can connect to the database running in another container.  If we fold this app into the [orcid-integration](https://github.com/gwu-libraries/orcid-integration) app then we can read from the token database.
+
+Here is an example request curl'ed to the `add-membership` route.  Note that the sample membership data json was 
+copied from https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/membership-3.0.json where other entity data samples are available.
 
 ```
 curl -X POST -H "Content-Type: application/json" -d '{
