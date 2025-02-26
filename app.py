@@ -9,6 +9,9 @@ app = Flask(__name__)
 # TODO: Really, query the DB when a request comes in
 app.tokens = {os.getenv('ORCID'): os.getenv('ORCID_TOKEN')}
 
+orcid_endpoints = {'membership': '/membership',
+                   }
+
 def get_db_connection():
     conn = psycopg2.connect(
         dbname=os.getenv('POSTGRES_DB', 'mydatabase'),
@@ -23,24 +26,26 @@ def get_db_connection():
 def health_check():
     return jsonify({'status': 'ok'})
 
-@app.route('/add-membership', methods=['POST'])
-def add_membership():
+@app.route('/add-service', methods=['POST'])
+def add_service():
     '''
-    Add a membership item for a specific orcid_id
+    Add a distinction item for a specific orcid_id
     Data should be of the form:
     {orcid_id: '0000-0000-0000-0000',
-     membership: 
-      {# see https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/membership-3.0.json}
+     item_type: 'membership', # or distinction, service, etc.
+     item_data: # should be ORCiD-formatted 
+      {# see https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/*.json}
     '''
     data = request.json
     # Extract orcid_id from request
     orcid_id = data.get('orcid_id') # orcid_id of the profile to update
-    membership_data = data.get('membership') # membership item info to add to the profile
+    item_type = data.get('item_type')
+    item_data = data.get('item_data') # item info to add to the profile
 
     # Retrieve token for this orcid_id from the database
     orcid_token = app.tokens[orcid_id]
     # If we don't have the token, or orcid_id wasn't specified, return an error
-    if not orcid_id or not membership_data:
+    if not orcid_id or not item_data:
         return jsonify({"error": "Missing ORCID ID or membership data"}), 400
 
     # If we have the token, use it to add the membership to the profile
@@ -50,11 +55,12 @@ def add_membership():
         "Authorization": f"Bearer {orcid_token}",
         "Content-Type": "application/vnd.orcid+json"
     }
-    membership_url = f"{os.getenv('ORCID_URL')}/{orcid_id}/membership"
-    response = requests.post(membership_url, headers=headers, json=membership_data)
+    # Get the appropriate ORCiD API endpoint
+    orcid_endpoint_url = f"{os.getenv('ORCID_URL')}/{orcid_id}/{item_type}"
+    response = requests.post(orcid_endpoint_url, headers=headers, json=item_data)
 
     if response.status_code == 201:
-        return jsonify({"message": "Membership added successfully"}), 201
+        return jsonify({"message": f'{item_type} item added successfully'}), 201
     else:
         return jsonify({"error": response.json()}), response.status_code
 
