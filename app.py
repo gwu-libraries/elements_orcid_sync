@@ -26,8 +26,8 @@ def get_db_connection():
 def health_check():
     return jsonify({'status': 'ok'})
 
-@app.route('/add-service', methods=['POST'])
-def add_service():
+@app.route('/add-activity', methods=['POST'])
+def add_activity():
     '''
     Add a distinction item for a specific orcid_id
     Data should be of the form:

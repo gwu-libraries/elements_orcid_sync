@@ -27,10 +27,10 @@ curl -X POST -H "Content-Type: application/json" -d '{
             }
         },
         "organization": {
-            "name": "University of Michigan",
+            "name": "Springfield Nuclear Power Plant",
             "address": {
-            "city": "Ann Arbor",
-            "region": "Michigan",
+            "city": "Springfield",
+            "region": "Anystate",
             "country": "US"
             },
             "disambiguated-organization": {
@@ -39,7 +39,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
             }
         },
         "url": {
-            "value": "https://example.com/org-url"
+            "value": "https://www.youtube.com/watch?v=Nxgkb_lYJJE"
         },
         "external-ids": {
             "external-id": [
@@ -70,4 +70,4 @@ curl -X POST -H "Content-Type: application/json" -d '{
             ]
         }
     }
-}' http://localhost:8000/add-membership
+}' http://localhost:8000/add-activity

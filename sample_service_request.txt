@@ -70,4 +70,4 @@ curl -X POST -H "Content-Type: application/json" -d '{
             ]
         }
     }
-}' http://localhost:8000/add-item
+}' http://localhost:8000/add-activity
