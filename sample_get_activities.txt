@@ -1,0 +1,3 @@
+curl -X GET -H "Content-Type: application/json" -d '{
+  "orcid_id": "0009-0008-7851-1368"
+}' http://localhost:8000/get-activities
