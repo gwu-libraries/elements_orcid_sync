@@ -39,7 +39,7 @@ def get_orcid_token(orcid_id):
     Return the token for a given ORCiD ID
     TODO: Retrieve this from the DB instead
     '''
-    return '9116eda4-23ec-4d7a-914f-ce1a8cbc7795'
+    return ''
     # return app.tokens[orcid_id]
     # conn = get_db_connection()
     # cur = conn.cursor()
@@ -70,10 +70,11 @@ def add_activity():
     item_data = data.get('item_data') # item info to add to the profile
 
     # Retrieve token for this orcid_id from the database
-    orcid_token = get_orcid_token(orcid_id)
+    #orcid_token = get_orcid_token(orcid_id)
+    orcid_token = data.get('orcid_token')
     # If we don't have the token, or orcid_id wasn't specified, return an error
-    if not orcid_id or not item_data:
-        return jsonify({"error": "Missing ORCID ID or membership data"}), 400
+    if not orcid_id or not orcid_token or not item_data:
+        return jsonify({"error": "Missing ORCID ID or ORCID token or membership data"}), 400
 
     # If we have the token, use it to add the membership to the profile
 #    headers = os.getenv('ORCID_HEADERS')
@@ -91,6 +92,52 @@ def add_activity():
     else:
         return jsonify({"error": response.json()}), response.status_code
 
+
+@app.route('/delete-activity', methods=['POST'])
+def delete_activity():
+    '''
+    Add a distinction item for a specific orcid_id
+    Data should be of the form:
+    {orcid_id: '0000-0000-0000-0000',
+     item_type: 'membership', # or distinction, service, etc.
+     item_data: # should be ORCiD-formatted 
+      {# see https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/*.json}
+    '''
+    data = request.json
+    # Extract orcid_id from request
+    orcid_id = data.get('orcid_id') # orcid_id of the profile to update
+    item_type = data.get('item_type')
+
+    # Retrieve token for this orcid_id from the database
+    #orcid_token = get_orcid_token(orcid_id)
+    orcid_token = data.get('orcid_token')
+    activity_id = data.get('activity_id')
+    # If we don't have the token, or orcid_id wasn't specified, return an error
+    if not orcid_id or not orcid_token:
+        return jsonify({"error": "Missing ORCID ID or ORCID token or membership data"}), 400
+
+    # If we have the token, use it to add the membership to the profile
+#    headers = os.getenv('ORCID_HEADERS')
+#    headers['Authorization'] += orcid_token
+    headers = {
+        "Authorization": f"Bearer {orcid_token}",
+        "Content-Type": "application/vnd.orcid+json"
+    }
+    # Get the appropriate ORCiD API endpoint
+    print('Sending delete request')
+    orcid_endpoint_url = f"{os.getenv('ORCID_URL')}/{orcid_id}/{item_type}/{activity_id}"
+    response = requests.delete(orcid_endpoint_url, headers=headers)
+    print("Endpoint URL:")
+    print(orcid_endpoint_url)
+    print("Response headers:")
+    print(response.request.headers)
+
+    if response.status_code == 201:
+        return jsonify({"message": f'{item_type} {activity_id} item deleted successfully'}), 201
+    else:
+        return jsonify({"URL": orcid_endpoint_url, "error": response.json()}), response.status_code
+    
+
 @app.route('/get-activities', methods=['GET'])
 def get_activities():
     """Retrieve activities for a specific ORCID ID."""
@@ -101,7 +148,8 @@ def get_activities():
     if not orcid_id:
         return jsonify({"error": "Missing ORCID ID"}), 400
     
-    orcid_token = get_orcid_token(orcid_id)
+    # orcid_token = get_orcid_token(orcid_id)
+    orcid_token = data.get('orcid_token')
     if not orcid_token:
         return jsonify({"error": "Invalid ORCID ID or missing token"}), 400
     
