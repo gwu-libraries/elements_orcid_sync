@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # TODO: Read this in from the DB extract
 # TODO: Really, query the DB when a request comes in
-app.tokens = {os.getenv('ORCID'): os.getenv('ORCID_TOKEN')}
+# app.tokens = {os.getenv('ORCID'): os.getenv('ORCID_TOKEN')}
 
 # orcid_endpoints = {'membership': '/membership', }
 
@@ -59,6 +59,7 @@ def add_activity():
     Add a distinction item for a specific orcid_id
     Data should be of the form:
     {orcid_id: '0000-0000-0000-0000',
+     orcid_token: 'token-goes-here',
      item_type: 'membership', # or distinction, service, etc.
      item_data: # should be ORCiD-formatted 
       {# see https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/*.json}
@@ -72,18 +73,13 @@ def add_activity():
     # Retrieve token for this orcid_id from the database
     #orcid_token = get_orcid_token(orcid_id)
     orcid_token = data.get('orcid_token')
-    # If we don't have the token, or orcid_id wasn't specified, return an error
     if not orcid_id or not orcid_token or not item_data:
         return jsonify({"error": "Missing ORCID ID or ORCID token or membership data"}), 400
 
-    # If we have the token, use it to add the membership to the profile
-#    headers = os.getenv('ORCID_HEADERS')
-#    headers['Authorization'] += orcid_token
     headers = {
         "Authorization": f"Bearer {orcid_token}",
         "Content-Type": "application/vnd.orcid+json"
     }
-    # Get the appropriate ORCiD API endpoint
     orcid_endpoint_url = f"{os.getenv('ORCID_URL')}/{orcid_id}/{item_type}"
     response = requests.post(orcid_endpoint_url, headers=headers, json=item_data)
 
@@ -104,35 +100,22 @@ def delete_activity():
       {# see https://github.com/ORCID/orcid-model/blob/master/src/main/resources/record_3.0/samples/write_samples/*.json}
     '''
     data = request.json
-    # Extract orcid_id from request
     orcid_id = data.get('orcid_id') # orcid_id of the profile to update
     item_type = data.get('item_type')
-
-    # Retrieve token for this orcid_id from the database
-    #orcid_token = get_orcid_token(orcid_id)
     orcid_token = data.get('orcid_token')
-    activity_id = data.get('activity_id')
-    # If we don't have the token, or orcid_id wasn't specified, return an error
+    activity_id = data.get('activity_id') # This should be the ORCiD put-code of the activity
+
     if not orcid_id or not orcid_token:
         return jsonify({"error": "Missing ORCID ID or ORCID token or membership data"}), 400
 
-    # If we have the token, use it to add the membership to the profile
-#    headers = os.getenv('ORCID_HEADERS')
-#    headers['Authorization'] += orcid_token
     headers = {
         "Authorization": f"Bearer {orcid_token}",
         "Content-Type": "application/vnd.orcid+json"
     }
-    # Get the appropriate ORCiD API endpoint
-    print('Sending delete request')
     orcid_endpoint_url = f"{os.getenv('ORCID_URL')}/{orcid_id}/{item_type}/{activity_id}"
     response = requests.delete(orcid_endpoint_url, headers=headers)
-    print("Endpoint URL:")
-    print(orcid_endpoint_url)
-    print("Response headers:")
-    print(response.request.headers)
 
-    if response.status_code == 201:
+    if response.status_code == 204:  # 204 is for successful deletion
         return jsonify({"message": f'{item_type} {activity_id} item deleted successfully'}), 201
     else:
         return jsonify({"URL": orcid_endpoint_url, "error": response.json()}), response.status_code
@@ -142,13 +125,11 @@ def delete_activity():
 def get_activities():
     """Retrieve activities for a specific ORCID ID."""
     data = request.json
-    # Extract orcid_id from request
     orcid_id = data.get('orcid_id') # orcid_id of the profile to update
     
     if not orcid_id:
         return jsonify({"error": "Missing ORCID ID"}), 400
     
-    # orcid_token = get_orcid_token(orcid_id)
     orcid_token = data.get('orcid_token')
     if not orcid_token:
         return jsonify({"error": "Invalid ORCID ID or missing token"}), 400
@@ -162,8 +143,6 @@ def get_activities():
     
     try:
         response = requests.get(orcid_endpoint_url, headers=headers)
-        print("Response headers:")
-        print(response.request.headers)
         response.raise_for_status()
         return jsonify(response.json()), response.status_code
     except requests.exceptions.RequestException as e:
@@ -172,4 +151,3 @@ def get_activities():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
-

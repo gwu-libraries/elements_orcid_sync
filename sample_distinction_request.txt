@@ -1,5 +1,6 @@
 curl -X POST -H "Content-Type: application/json" -d '{
-  "orcid_id": "0009-0008-7851-1368",
+  "orcid_id": "0000-0002-1878-2691",
+  "orcid_token": "TOKEN-GOES-HERE",
   "item_type": "distinction",
   "item_data": {
         "department-name": "Open Source Program Office",
